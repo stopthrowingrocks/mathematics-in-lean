@@ -38,18 +38,73 @@ example : min a b = min b a := by
     apply min_le_right
     apply min_le_left
 
+#check (max_le : a ≤ c → b ≤ c → max a b ≤ c)
+#check (le_max_left a b : a ≤ max a b)
+#check (le_max_right a b : b ≤ max a b)
+
 example : max a b = max b a := by
-  sorry
+  have h : ∀ x y : ℝ, max x y ≤ max y x := by
+    intro x y
+    apply max_le
+    apply le_max_right
+    apply le_max_left
+  apply le_antisymm
+  exact h a b
+  exact h b a
+
+#check le_trans
+
 example : min (min a b) c = min a (min b c) := by
-  sorry
+  have hab : min (min a b) c ≤ min a b := by apply min_le_left
+  have hbc : min a (min b c) ≤ min b c := by apply min_le_right
+  apply le_antisymm
+  · show min (min a b) c ≤ min a (min b c)
+    apply le_min
+    · show min (min a b) c ≤ a
+      apply le_trans hab
+      apply min_le_left
+    · show min (min a b) c ≤ min b c
+      apply le_min
+      · show min (min a b) c ≤ b
+        apply le_trans hab
+        apply min_le_right
+      · show min (min a b) c ≤ c
+        apply min_le_right
+  · show min a (min b c) ≤ min (min a b) c
+    apply le_min
+    · show min a (min b c) ≤ min a b
+      apply le_min
+      · show min a (min b c) ≤ a
+        apply min_le_left
+      · show min a (min b c) ≤ b
+        apply le_trans hbc
+        apply min_le_left
+    · show min a (min b c) ≤ c
+      apply le_trans hbc
+      apply min_le_right
+
 theorem aux : min a b + c ≤ min (a + c) (b + c) := by
-  sorry
+  apply le_min
+  · show min a b + c ≤ a + c
+    linarith [min_le_left a b]
+  · show min a b + c ≤ b + c
+    linarith [min_le_right a b]
 example : min a b + c = min (a + c) (b + c) := by
-  sorry
+  apply le_antisymm
+  · show min a b + c ≤ min (a + c) (b + c)
+    apply aux
+  · show min (a + c) (b + c) ≤ min a b + c
+    have h : min (a + c) (b + c) + -c ≤ min (a + c + -c) (b + c + -c) := by apply aux
+    rw [add_neg_cancel_right, add_neg_cancel_right] at h
+    linarith
+
 #check (abs_add : ∀ a b : ℝ, |a + b| ≤ |a| + |b|)
 
-example : |a| - |b| ≤ |a - b| :=
-  sorry
+example : |a| - |b| ≤ |a - b| := by
+  have h := abs_add (a - b) b
+  rw [sub_add_cancel] at h
+  linarith
+
 end
 
 section
@@ -65,8 +120,18 @@ example : x ∣ y * x * z := by
 example : x ∣ x ^ 2 := by
   apply dvd_mul_left
 
+#check dvd_mul_of_dvd_left
+#check dvd_rfl
+
 example (h : x ∣ w) : x ∣ y * (x * z) + x ^ 2 + w ^ 2 := by
-  sorry
+  apply dvd_add
+  apply dvd_add
+  apply dvd_mul_of_dvd_right
+  apply dvd_mul_of_dvd_left
+  apply dvd_rfl
+  apply dvd_mul_of_dvd_right
+  apply dvd_rfl
+  apply dvd_mul_of_dvd_right h
 end
 
 section
@@ -78,7 +143,5 @@ variable (m n : ℕ)
 #check (Nat.lcm_zero_left n : Nat.lcm 0 n = 0)
 
 example : Nat.gcd m n = Nat.gcd n m := by
-  sorry
+  apply Nat.gcd_comm
 end
-
-
