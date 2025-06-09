@@ -1,13 +1,18 @@
 # Some things to know
+- `;` is used to conjoin lines, `<;>` is used to perform repeat applications.
+
 ## The full meaning of `->`
 In this document, I sometimes describe expressions of the form `A -> B`. This can represent an implication or a forall. Also, negation `¬A` is represented as `A -> False`.
 
 ## Questions
 - When can I use `at h`?
-- What is the difference between `↦`, `→`, and all the other connectors?
+- What is the difference between `↦`, `→`, `=>`, and all the other connectors?
 - Is there a key I can press to convert the current phrase into the symbol? Like `\and` -> `∧`
 - Is there a way to condense things onto a single line without `;`?
+- How does `convert` work? (I know they explained it but it's just a bit shaky right now.) And wth is `using 1` at the end of `convert`?
 
+## Wishes
+- I wish there was a way to autocomplete the structure of a proof with `sorry`s
 
 # All the lean tactics
 
@@ -51,3 +56,12 @@ can function like return.
 
 ## `contrapose`
 Use `contrapose! ¬A` to swap the term `¬A` and goal `¬B` with the term `B` and the goal `A`. This causes the term `¬A` to be removed from the context.
+
+## `ext`
+Takes a goal of the form `fun x => f x = fun x => g x`, intros `x`, and replaces the goal with `f x = g x`. Works with multiple arguments as well.
+
+## `congr`
+Given goal `f x = f y`, replaces the goal with `x = y`.
+
+## `convert`
+`convert` is kind of magic. It seems like it let's you assume that you've proved certain relations, finishes the proof using everything you've supplied, and then politely returns the relations it inferred it needed.
