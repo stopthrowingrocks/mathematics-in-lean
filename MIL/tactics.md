@@ -1,5 +1,6 @@
 # Some things to know
 - `;` is used to conjoin lines, `<;>` is used to perform repeat applications.
+- `at *` applies whatever you're doing to every hypothesis and the goal.
 
 ## The full meaning of `->`
 In this document, I sometimes describe expressions of the form `A -> B`. This can represent an implication or a forall. Also, negation `¬A` is represented as `A -> False`.
@@ -8,8 +9,8 @@ In this document, I sometimes describe expressions of the form `A -> B`. This ca
 - When can I use `at h`?
 - What is the difference between `↦`, `→`, `=>`, and all the other connectors?
 - Is there a key I can press to convert the current phrase into the symbol? Like `\and` -> `∧`
-- Is there a way to condense things onto a single line without `;`?
 - How does `convert` work? (I know they explained it but it's just a bit shaky right now.) And wth is `using 1` at the end of `convert`?
+- How to use `cases` and declare the variable name too?
 
 ## Wishes
 - I wish there was a way to autocomplete the structure of a proof with `sorry`s
@@ -48,7 +49,7 @@ This is a special version of `rw`, called using `nth_rw n [f]`, that will only p
 ## `simp`
 According to the documentation, `simp` simplifies the main goal target using lemmas tagged with the attribute
 
-You can use `at h` to simplify within a hypothesis.
+You can use `at h` to simplify within a hypothesis. You can also write `simp only [f]` to only simplify according to `f`.
 
 ## `exact`
 `exact`ly what you think it does
@@ -65,3 +66,6 @@ Given goal `f x = f y`, replaces the goal with `x = y`.
 
 ## `convert`
 `convert` is kind of magic. It seems like it let's you assume that you've proved certain relations, finishes the proof using everything you've supplied, and then politely returns the relations it inferred it needed.
+
+## `trivial`
+A proof of `True`.
