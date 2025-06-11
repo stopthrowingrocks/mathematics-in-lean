@@ -34,54 +34,96 @@ example : s ⊆ f ⁻¹' (f '' s) := by
   use x, xs
 
 example : f '' s ⊆ v ↔ s ⊆ f ⁻¹' v := by
-  sorry
+  constructor
+  · {
+    intro h x xs
+    apply h
+    exact ⟨x, ⟨xs, rfl⟩⟩
+  }
+  · {
+    rintro h x ⟨y, ⟨ys, rfl⟩⟩
+    exact h ys
+  }
 
 example (h : Injective f) : f ⁻¹' (f '' s) ⊆ s := by
-  sorry
+  rintro x ⟨y, ⟨ys, feq⟩⟩
+  rwa [h feq] at ys
 
 example : f '' (f ⁻¹' u) ⊆ u := by
-  sorry
+  rintro _ ⟨y, h, rfl⟩
+  exact h
 
 example (h : Surjective f) : u ⊆ f '' (f ⁻¹' u) := by
-  sorry
+  rintro x xu
+  rcases h x with ⟨y, rfl⟩
+  use y, xu
 
 example (h : s ⊆ t) : f '' s ⊆ f '' t := by
-  sorry
+  rintro _ ⟨y, ys, rfl⟩
+  use y, h ys
 
 example (h : u ⊆ v) : f ⁻¹' u ⊆ f ⁻¹' v := by
-  sorry
+  rintro x hu
+  exact h hu
 
-example : f ⁻¹' (u ∪ v) = f ⁻¹' u ∪ f ⁻¹' v := by
-  sorry
+example : f ⁻¹' (u ∪ v) = f ⁻¹' u ∪ f ⁻¹' v := by rfl
 
 example : f '' (s ∩ t) ⊆ f '' s ∩ f '' t := by
-  sorry
+  rintro _ ⟨y, ⟨ys, yt⟩, rfl⟩
+  constructor
+  · exact ⟨y, ys, rfl⟩
+  · exact ⟨y, yt, rfl⟩
 
 example (h : Injective f) : f '' s ∩ f '' t ⊆ f '' (s ∩ t) := by
-  sorry
+  rintro x ⟨⟨y, ys, rfl⟩, ⟨z, zt, hz⟩⟩
+  rw [h hz] at zt
+  use y, ⟨ys, zt⟩
 
 example : f '' s \ f '' t ⊆ f '' (s \ t) := by
-  sorry
+  rintro x ⟨⟨y, ys, rfl⟩, r⟩
+  use y, ⟨ys, (by
+    contrapose! r
+    use y
+  )⟩
 
 example : f ⁻¹' u \ f ⁻¹' v ⊆ f ⁻¹' (u \ v) := by
-  sorry
+  rintro x ⟨xu, nxv⟩
+  use xu, nxv
+  -- just `simp` also works
 
 example : f '' s ∩ v = f '' (s ∩ f ⁻¹' v) := by
-  sorry
+  ext x; constructor
+  · rintro ⟨⟨y, ys, rfl⟩, xv⟩
+    exact ⟨y, ⟨ys, xv⟩, rfl⟩
+  · rintro ⟨y, ⟨ys, xv⟩, rfl⟩
+    exact ⟨⟨y, ys, rfl⟩, xv⟩
 
 example : f '' (s ∩ f ⁻¹' u) ⊆ f '' s ∩ u := by
-  sorry
+  rintro _ ⟨y, ⟨ys, xu⟩, rfl⟩
+  exact ⟨⟨y, ys, rfl⟩, xu⟩
 
 example : s ∩ f ⁻¹' u ⊆ f ⁻¹' (f '' s ∩ u) := by
-  sorry
+  rintro x ⟨xs, xu⟩
+  exact ⟨⟨x, xs, rfl⟩, xu⟩
 
 example : s ∪ f ⁻¹' u ⊆ f ⁻¹' (f '' s ∪ u) := by
-  sorry
+  rintro x (xs | fu)
+  · left; exact ⟨x, ⟨xs, rfl⟩⟩
+  · right; exact fu
 
 variable {I : Type*} (A : I → Set α) (B : I → Set β)
 
 example : (f '' ⋃ i, A i) = ⋃ i, f '' A i := by
-  sorry
+  ext x; constructor
+  · rintro ⟨y, h, rfl⟩
+    simp at *
+    have ⟨i, yAi⟩ := h
+    use i, y
+  · rintro h
+    simp at *
+    -- For some reason I can't put this into the `rintro`.
+    have ⟨i, y, yAi, rf⟩ := h
+    exact ⟨y, ⟨i, yAi⟩, rf⟩
 
 example : (f '' ⋂ i, A i) ⊆ ⋂ i, f '' A i := by
   sorry

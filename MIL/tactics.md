@@ -13,6 +13,7 @@ In this document, I sometimes describe expressions of the form `A -> B`. This ca
 - How to use `cases` and declare the variable name too?
 - What exactly does `<;>` do?
 - In lean, is it easy to separate what requires classical logic versus what doesn't?
+- Is there a notebook filetype for lean like .rmd or .ipynd?
 
 ## Wishes
 - I wish there was a way to autocomplete the structure of a proof with `sorry`s
