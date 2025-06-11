@@ -126,16 +126,27 @@ example : (f '' ⋃ i, A i) = ⋃ i, f '' A i := by
     exact ⟨y, ⟨i, yAi⟩, rf⟩
 
 example : (f '' ⋂ i, A i) ⊆ ⋂ i, f '' A i := by
-  sorry
+  rintro _ ⟨y, h, rfl⟩
+  simp at *
+  intro i
+  use y, h i
 
 example (i : I) (injf : Injective f) : (⋂ i, f '' A i) ⊆ f '' ⋂ i, A i := by
-  sorry
+  rintro x h
+  simp at *
+  rcases h i with ⟨a, aAi, rfl⟩
+  use a
+  constructor; case right => rfl
+  intro j
+  rcases h j with ⟨b, bAj, heq⟩
+  rw [injf heq] at bAj
+  exact bAj
 
 example : (f ⁻¹' ⋃ i, B i) = ⋃ i, f ⁻¹' B i := by
-  sorry
+  ext x; constructor <;> simp
 
 example : (f ⁻¹' ⋂ i, B i) = ⋂ i, f ⁻¹' B i := by
-  sorry
+  ext x; constructor <;> simp
 
 example : InjOn f s ↔ ∀ x₁ ∈ s, ∀ x₂ ∈ s, f x₁ = f x₂ → x₁ = x₂ :=
   Iff.refl _
@@ -165,16 +176,43 @@ example : range exp = { y | y > 0 } := by
   rw [exp_log ypos]
 
 example : InjOn sqrt { x | x ≥ 0 } := by
-  sorry
+  intro x hx y hy hf
+  simp at hx hy
+  calc
+    x = √x ^ 2 := eq_comm.mp (sq_sqrt hx)
+    _ = √y ^ 2 := by rw [hf]
+    _ = y := sq_sqrt hy
+
 
 example : InjOn (fun x ↦ x ^ 2) { x : ℝ | x ≥ 0 } := by
-  sorry
+  intro x hx y hy hf
+  simp at *
+  calc
+    x = √(x ^ 2) := eq_comm.mp (sqrt_sq hx)
+    _ = √(y ^ 2) := by rw [hf]
+    _ = y := sqrt_sq hy
 
 example : sqrt '' { x | x ≥ 0 } = { y | y ≥ 0 } := by
-  sorry
+  ext y; constructor
+  · rintro h
+    simp at *
+    rcases h with ⟨x, hx, rfl⟩
+    exact sqrt_nonneg x
+  · rintro h
+    simp at *
+    use (y ^ 2)
+    exact ⟨sq_nonneg y, sqrt_sq h⟩
 
 example : (range fun x ↦ x ^ 2) = { y : ℝ | y ≥ 0 } := by
-  sorry
+  ext y; constructor
+  · rintro h
+    simp at *
+    rcases h with ⟨ysqrt, rfl⟩
+    exact sq_nonneg ysqrt
+  · rintro h
+    simp at *
+    use √y
+    exact sq_sqrt h
 
 end
 
@@ -205,11 +243,28 @@ variable (f : α → β)
 
 open Function
 
-example : Injective f ↔ LeftInverse (inverse f) f :=
-  sorry
+example : Injective f ↔ LeftInverse (inverse f) f := by
+  constructor
+  · intro finj x
+    have e : ∃ z, f z = f x := by use x
+    rw [inverse, dif_pos e]
+    exact finj (Classical.choose_spec e)
+  · rintro finv x y feq
+    calc
+      x = inverse f (f x) := eq_comm.1 (finv x)
+      _ = inverse f (f y) := by rw [feq]
+      _ = y := finv y
 
-example : Surjective f ↔ RightInverse (inverse f) f :=
-  sorry
+example : Surjective f ↔ RightInverse (inverse f) f := by
+  constructor
+  · rintro fsur x
+    rcases fsur x with ⟨a, rfl⟩
+    have e : ∃ z, f z = f a := by use a
+    rw [inverse, dif_pos e]
+    exact Classical.choose_spec e
+  · rintro h x
+    use inverse f x
+    exact h x
 
 end
 
@@ -225,11 +280,10 @@ theorem Cantor : ∀ f : α → Set α, ¬Surjective f := by
     intro h'
     have : j ∉ f j := by rwa [h] at h'
     contradiction
-  have h₂ : j ∈ S
-  sorry
-  have h₃ : j ∉ S
-  sorry
+  have h₂ : j ∈ S := h₁
+  have h₃ : j ∉ S := by
+    rw [h] at h₁
+    exact h₁
   contradiction
 
--- COMMENTS: TODO: improve this
 end
