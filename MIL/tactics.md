@@ -11,6 +11,8 @@ In this document, I sometimes describe expressions of the form `A -> B`. This ca
 - Is there a key I can press to convert the current phrase into the symbol? Like `\and` -> `∧`
 - How does `convert` work? (I know they explained it but it's just a bit shaky right now.) And wth is `using 1` at the end of `convert`?
 - How to use `cases` and declare the variable name too?
+- What exactly does `<;>` do?
+- In lean, is it easy to separate what requires classical logic versus what doesn't?
 
 ## Wishes
 - I wish there was a way to autocomplete the structure of a proof with `sorry`s
@@ -43,13 +45,20 @@ A more powerful form of `intro` that can also destruct constructors like `rcases
 ## `rw`
 Syntax is `rw [f]` or `rw [f1 f2 f3]` or `rw [f1 f2 f3] at h`. Given a term of the form `f := x = y`, `rw [f]` will replace all instances of `x` with `y` in the goal (or term `h` if using `at h`). Sometimes `f` is parameterized, in which case `rw` will just set the parameterization based on the first instance it can find, and then make as many rewrites using that parameterization as possible.
 
+For non-functions, will just substitute the term for the definition.
+
 ### `nth_rw`
 This is a special version of `rw`, called using `nth_rw n [f]`, that will only perform a rewrite on the `n`th matching instance.
 
+### `rwa`
+Also calls `assumption` after the rewrite completes.
+
 ## `simp`
 According to the documentation, `simp` simplifies the main goal target using lemmas tagged with the attribute
+- Use `at h` to simplify within a hypothesis.
+- Write `simp only [f]` to only simplify according to `f`.
+- Write `simp [-f]` to prevent `f` from being used to simplify the expression.
 
-You can use `at h` to simplify within a hypothesis. You can also write `simp only [f]` to only simplify according to `f`.
 
 ## `exact`
 `exact`ly what you think it does
@@ -69,3 +78,7 @@ Given goal `f x = f y`, replaces the goal with `x = y`.
 
 ## `trivial`
 A proof of `True`.
+
+## `use`
+Fill in a value for an existential quantifier or an `and` or any other construction.
+It seems that when you call this lean will also fill in any other values from the terms that it can. Why doesn't it do that automatically with other terms like `rw`? Is there a version that doesn't do that?
