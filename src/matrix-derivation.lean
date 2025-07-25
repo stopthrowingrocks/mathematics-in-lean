@@ -4,10 +4,6 @@ import Mathlib.Data.Matrix.Basic
 import Mathlib.LinearAlgebra.Matrix.StdBasis
 import Mathlib.Data.Fintype.Basic
 import Mathlib.Tactic.NoncommRing
-import MIL.Common
-import Mathlib.Data.Set.Lattice
-import Mathlib.Data.Set.Function
-import Mathlib.Analysis.SpecialFunctions.Log.Basic
 
 open Matrix
 
@@ -308,9 +304,3 @@ def rotateGenFamily (R : Type) [CommRing R] {ValidIndex : Type → Prop}
   G {α} _ _ vα := by
     obtain ⟨n, f⟩ := h α vα
     exact fun i j => rotationMatrix R n (f i) (f j)
-
-def ValidShape : Type → Prop
-| Fin 1
-| Fin 3 => True
-
-asd
