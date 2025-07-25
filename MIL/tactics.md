@@ -6,14 +6,18 @@
 In this document, I sometimes describe expressions of the form `A -> B`. This can represent an implication or a forall. Also, negation `¬A` is represented as `A -> False`.
 
 ## Questions
-- When can I use `at h`?
-- What is the difference between `↦`, `→`, `=>`, and all the other connectors?
 - Is there a key I can press to convert the current phrase into the symbol? Like `\and` -> `∧`
 - How does `convert` work? (I know they explained it but it's just a bit shaky right now.) And wth is `using 1` at the end of `convert`?
 - How to use `cases` and declare the variable name too?
 - What exactly does `<;>` do?
 - In lean, is it easy to separate what requires classical logic versus what doesn't?
 - Is there a notebook filetype for lean like .rmd or .ipynd?
+- How do I create a testing context? I want to be able to write things like
+  ```lean
+  let my_type := Fin 1
+  let x : my_type := 0
+  let y : my_type := 1 -- fails
+  ```
 
 ## Wishes
 - I wish there was a way to autocomplete the structure of a proof with `sorry`s
