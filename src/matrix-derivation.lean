@@ -3,7 +3,8 @@ import Mathlib.Data.Fin.Basic
 import Mathlib.Data.Matrix.Basic
 import Mathlib.LinearAlgebra.Matrix.StdBasis
 import Mathlib.Data.Fintype.Basic
-import Mathlib.Tactic.NoncommRing
+import Mathlib.Logic.Unique
+import Mathlib.Data.Nat.Prime.Defs
 
 open Matrix
 
@@ -11,13 +12,6 @@ open Matrix
 @[simp] lemma eq_comm' {α : Type*} {i j : α} : (i = j) = (j = i) := by
   simp
   apply eq_comm
-
-instance : Unique (Fin 1) where
-  default := 0
-  uniq := by
-    rintro ⟨n, h⟩
-    simp
-    exact Nat.lt_one_iff.mp h
 
 lemma stdBasis_apply
   {n m : Type} [Fintype n] [DecidableEq n] [Fintype m] [DecidableEq m]
@@ -27,23 +21,21 @@ lemma stdBasis_apply
 
 /-- A derivation on matrices of fixed shape (n × m). -/
 @[ext] structure MatrixDerivationFamily
-  (R : Type) [Semiring R] (ValidIndex : Type → Prop)
+  (R : Type) [Semiring R] (ValidIndex : ℕ → Prop)
 where
-  D
-    : ∀ {n m : Type} [Fintype n] [Fintype m] [DecidableEq n] [DecidableEq m]
-    (_vn : ValidIndex n) (_vm : ValidIndex m),
-      Matrix n m R → Matrix n m R
-  linearity
-    : ∀ {n m s : Type} [Fintype n] [Fintype m] [Fintype s] [DecidableEq n] [DecidableEq m]
-    (_vn : ValidIndex n) (_vm : ValidIndex m)
+  D :
+    ∀ {n m : ℕ} (_vn : ValidIndex n) (_vm : ValidIndex m),
+    Matrix (Fin n) (Fin m) R → Matrix (Fin n) (Fin m) R
+  linearity :
+    ∀ {n m : ℕ} (vn : ValidIndex n) (vm : ValidIndex m),
+    ∀ {s : Type} [Fintype s] [DecidableEq s]
     (a : s -> R)
-    (A : s -> Matrix n m R),
-      D _vn _vm (∑ (t : s), (a t) • (A t)) = ∑ (t : s), (a t) • D _vn _vm (A t)
+    (A : s -> Matrix (Fin n) (Fin m) R),
+      D vn vm (∑ (t : s), (a t) • (A t)) = ∑ (t : s), (a t) • D vn vm (A t)
   product_rule :
-    ∀ {n k m : Type} [Fintype n] [Fintype k] [Fintype m] [DecidableEq n] [DecidableEq k] [DecidableEq m]
-    (_vn : ValidIndex n) (_vk : ValidIndex k) (_vm : ValidIndex m)
-    (A : Matrix n k R) (B : Matrix k m R),
-      D _vn _vm (A * B) = A * (D _vk _vm B) + (D _vn _vk A) * B
+    ∀ {n k m : ℕ} (vn : ValidIndex n) (vk : ValidIndex k) (vm : ValidIndex m)
+    (A : Matrix (Fin n) (Fin k) R) (B : Matrix (Fin k) (Fin m) R),
+      D vn vm (A * B) = A * (D vk vm B) + (D vn vk A) * B
 
 /--
 A family of “generator” matrices `G n` for each dimension `n`
@@ -51,28 +43,28 @@ that induce a consistent derivation:
   D A = G n * A - A * G m.
 -/
 structure GeneratorFamily
-  (R : Type) [CommRing R] (ValidIndex : Type → Prop)
+  (R : Type) [CommRing R] (ValidIndex : ℕ → Prop)
 where
-  G : ∀ {n : Type} [Fintype n] [DecidableEq n] (_vn : ValidIndex n), Matrix n n R
+  G : ∀ {n : ℕ} (_vn : ValidIndex n), Matrix (Fin n) (Fin n) R
 
 @[ext] theorem GeneratorFamily.ext
-  {R : Type} [CommRing R] {ValidIndex : Type → Prop}
+  {R : Type} [CommRing R] {ValidIndex : ℕ → Prop}
   {F₁ F₂ : GeneratorFamily R ValidIndex}
-  (h : ∀ {n : Type} [Fintype n] [DecidableEq n] (vn : ValidIndex n), F₁.G vn = F₂.G vn)
+  (h : ∀ {n : ℕ} (vn : ValidIndex n), F₁.G vn = F₂.G vn)
 : F₁ = F₂ := by
   cases F₁
   · cases F₂
-    · congr; funext n _ _ vn
+    · congr; funext n vn
       apply h
 
 /-- From a `GeneratorFamily`, build a full `MatrixDerivationFamily`. -/
 def GeneratorFamily.toMatrixDerivationFamily
   {R : Type} [CommRing R] (self : GeneratorFamily R ValidIndex) : MatrixDerivationFamily R ValidIndex where
-  D {n m} fin_n fin_m dn dm _vn _vm A := (self.G _vn) * A - A * (self.G _vm)
+  D {n m} vn vm A := (self.G vn) * A - A * (self.G vm)
   linearity := by
-    intro n m s _ _ _ _ _ vn vm a A
+    intro n m vn vm s _ _ a A
     simp
-    have inst := @Matrix.semiring n R _ _ _
+    have inst := @Matrix.semiring (Fin n) R _ _ _
     rw [show self.G vn * ∑ t : s, a t • A t = ∑ t : s, self.G vn * a t • A t by
       unfold Finset.sum
       apply map_sum (Matrix.addMonoidHomMulLeft (self.G vn))
@@ -86,37 +78,37 @@ def GeneratorFamily.toMatrixDerivationFamily
     congr; ext _ _ _
     simp [mul_sub]
   product_rule := by
-    intro n k m _ _ _ _ _ _ vn vk vm A B
+    intro n k m vn vk vm A B
     simp [Matrix.mul_sub, Matrix.sub_mul, Matrix.mul_assoc]
 
 /-- Reconstruct the generator matrix Gₙ from a derivation `D`
     by seeing how it acts on column basis vectors. -/
 def MatrixDerivationFamily.generatorOf
-  {R : Type} [CommRing R] {ValidIndex : Type → Prop}
+  {R : Type} [CommRing R] {ValidIndex : ℕ → Prop}
   (self : MatrixDerivationFamily R ValidIndex)
-  {n : Type} [Fintype n] [DecidableEq n] (_vn: ValidIndex n)
-  {u : Type} [uu : Unique u] (vu : ValidIndex u)
-: Matrix n n R :=
-  fun i j => (self.D _vn vu (stdBasisMatrix j uu.default 1)) i uu.default -- idk if this is the right order
+  {n : ℕ} (vn : ValidIndex n)
+  (v₁ : ValidIndex 1)
+: Matrix (Fin n) (Fin n) R :=
+  fun i j => (self.D vn v₁ (stdBasisMatrix j 0 1)) i 0 -- idk if this is the right order
 
 /-- Convert an entire derivation family back into a `GeneratorFamily`. -/
 def MatrixDerivationFamily.toGeneratorFamily
-  {R : Type} [CommRing R] {ValidIndex : Type → Prop}
+  {R : Type} [CommRing R] {ValidIndex : ℕ → Prop}
   (self : MatrixDerivationFamily R ValidIndex)
-  {u : Type} [Unique u] (vu : ValidIndex u)
+  (v₁ : ValidIndex 1)
 : GeneratorFamily R ValidIndex where
-  G {n} {_fn : Fintype n} {_dn : DecidableEq n} (vn : ValidIndex n) := by
-    exact self.generatorOf vn vu
+  G {n} (vn : ValidIndex n) := by
+    exact self.generatorOf vn v₁
 
 /-- Converting a `GeneratorFamily` to a `MatrixDerivationFamily` and back recovers the original. -/
 theorem GeneratorFamily.iso_MatrixDerivation
-  {R : Type} [CommRing R] {ValidIndex : Type → Prop}
+  {R : Type} [CommRing R] {ValidIndex : ℕ → Prop}
   (self : GeneratorFamily R ValidIndex)
-  {u : Type} [Unique u] {vu : ValidIndex u}
-  /- Generator of u is zero. When this comes from a MatrixDerivationFamily it's guaranteed but not in general. -/
-  (hu : self.G vu = 0)
-: self.toMatrixDerivationFamily.toGeneratorFamily vu = self := by
-  apply GeneratorFamily.ext; intros n _ _ vn
+  {v₁ : ValidIndex 1}
+  -- 1×1 generator matrix is zero. When this comes from a MatrixDerivationFamily it's guaranteed but not in general.
+  (h₁ : self.G v₁ = 0)
+: self.toMatrixDerivationFamily.toGeneratorFamily v₁ = self := by
+  apply GeneratorFamily.ext; intros n vn
   -- now we must show pointwise equality of the G‐fields:
   funext i j
   rw [MatrixDerivationFamily.toGeneratorFamily]
@@ -124,32 +116,34 @@ theorem GeneratorFamily.iso_MatrixDerivation
   simp [MatrixDerivationFamily.generatorOf]
   rw [sub_eq_self.mpr]
   rw [Matrix.mul_apply]
-  rw [hu]
+  rw [h₁]
   simp
 
 lemma MatrixDerivationFamily.generatorOfScalar
-  {R : Type} [CommRing R] {ValidIndex : Type → Prop}
+  {R : Type} [CommRing R] {ValidIndex : ℕ → Prop}
   (self : MatrixDerivationFamily R ValidIndex)
-  {U : Type} [UU : Unique U] (vu : ValidIndex U)
-  (scalarVec : Matrix U U R)
-: self.D vu vu scalarVec = 0 := by
-  have h : ∀ svec : Matrix U U R, svec = ∑ _ : U, svec UU.default UU.default • stdBasisMatrix UU.default UU.default (1 : R) := by
-    intro svec; ext i j
+  (v₁ : ValidIndex 1)
+  (scalarVec : Matrix (Fin 1) (Fin 1) R)
+: self.D v₁ v₁ scalarVec = 0 := by
+  have u := Fin.instUnique
+  have h : ∀ svec : Matrix (Fin 1) (Fin 1) R, svec = ∑ _ : (Fin 1), svec 0 0 • stdBasisMatrix 0 0 (1 : R) := by
+    intro svec
     simp
+    ext i j
     rw [stdBasis_apply]
-    rw [UU.uniq i, UU.uniq j]
+    rw [u.uniq i, u.uniq j, u.uniq 0]
     simp
 
   rw [h scalarVec]
   rw [self.linearity]
   simp
   have h₂ := calc
-    self.D vu vu (stdBasisMatrix UU.default UU.default 1) + 0
-      = self.D vu vu (stdBasisMatrix UU.default UU.default 1 * stdBasisMatrix UU.default UU.default 1) := by simp
-    _ = self.D vu vu (stdBasisMatrix UU.default UU.default 1)
-        + self.D vu vu (stdBasisMatrix UU.default UU.default 1) := by
-      rw [self.product_rule vu vu vu]
-      ext _u₃ _u₄; rw [UU.uniq _u₃, UU.uniq _u₄]
+    self.D v₁ v₁ (stdBasisMatrix 0 0 1) + 0
+      = self.D v₁ v₁ (stdBasisMatrix 0 0 1 * stdBasisMatrix 0 0 1) := by simp
+    _ = self.D v₁ v₁ (stdBasisMatrix 0 0 1)
+        + self.D v₁ v₁ (stdBasisMatrix 0 0 1) := by
+      rw [self.product_rule v₁ v₁ v₁]
+      ext _u₃ _u₄; rw [u.uniq _u₃, u.uniq _u₄, u.uniq 0]
       rw [Matrix.add_apply]
       rw [Matrix.mul_apply, Matrix.mul_apply]
       simp
@@ -157,18 +151,19 @@ lemma MatrixDerivationFamily.generatorOfScalar
   simp [add_left_cancel (Eq.symm h₂)]
 
 lemma MatrixDerivationFamily.generatorOfCol
-  {R : Type} [CommRing R] {ValidIndex : Type → Prop}
+  {R : Type} [CommRing R] {ValidIndex : ℕ → Prop}
   (self : MatrixDerivationFamily R ValidIndex)
-  {n : Type} [Fintype n] [DecidableEq n] (vn : ValidIndex n)
-  {U : Type} [UU : Unique U] (vu : ValidIndex U)
-  (colVec : Matrix n U R)
-: self.D vn vu colVec = (self.generatorOf vn vu) * colVec := by
-  ext i _u₁; rw [UU.uniq _u₁]
+  {n : ℕ} (vn : ValidIndex n)
+  (v₁ : ValidIndex 1)
+  (colVec : Matrix (Fin n) (Fin 1) R)
+: self.D vn v₁ colVec = (self.generatorOf vn v₁) * colVec := by
+  have u := Fin.instUnique
+  ext i _u₁; rw [u.uniq _u₁]
   rw [Matrix.mul_apply]
-  have hcol : colVec = ∑ (i : n), colVec i UU.default • stdBasisMatrix i UU.default 1 := by
-    ext k _u₂; rw [UU.uniq _u₂]
+  have hcol : colVec = ∑ (i : Fin n), colVec i u.default • stdBasisMatrix i u.default 1 := by
+    ext k _u₂; rw [u.uniq _u₂]
     rw [Fintype.sum_apply, Fintype.sum_apply]
-    rw [← Fintype.sum_ite_eq k (fun k' => colVec k' UU.default)]
+    rw [← Fintype.sum_ite_eq k (fun k' => colVec k' u.default)]
     congr; ext i
     simp [stdBasis_apply]
   nth_rw 1 [hcol]
@@ -177,50 +172,53 @@ lemma MatrixDerivationFamily.generatorOfCol
   congr; ext j
   rw [MatrixDerivationFamily.generatorOf]
   simp
-  rw [mul_comm]
+  rw [mul_comm, u.uniq 0]
 
 lemma MatrixDerivationFamily.generatorOfCols
-  {R : Type} [CommRing R] {ValidIndex : Type → Prop}
+  {R : Type} [CommRing R] {ValidIndex : ℕ → Prop}
   (self : MatrixDerivationFamily R ValidIndex)
-  {n : Type} [Fintype n] [DecidableEq n] (vn : ValidIndex n)
-  {u : Type} [uu : Unique u] (vu : ValidIndex u)
-: self.generatorOf vn vu
-  = fun (i j : n) => ((stdBasisMatrix uu.default i (1 : R)) * self.D vn vu (stdBasisMatrix j uu.default (1 : R))) uu.default uu.default := by
+  {n : ℕ} (vn : ValidIndex n)
+  (v₁ : ValidIndex 1)
+: self.generatorOf vn v₁
+  = fun (i j : Fin n) => ((stdBasisMatrix 0 i (1 : R)) * self.D vn v₁ (stdBasisMatrix j 0 (1 : R))) 0 0 := by
   ext i j
   rw [MatrixDerivationFamily.generatorOfCol]
   simp
 
 lemma MatrixDerivationFamily.generatorOfRow
-  {R : Type} [CommRing R] {ValidIndex : Type → Prop}
+  {R : Type} [CommRing R] {ValidIndex : ℕ → Prop}
   (self : MatrixDerivationFamily R ValidIndex)
-  {n : Type} [Fintype n] [DecidableEq n] (vn : ValidIndex n)
-  {U : Type} [UU : Unique U] (vu : ValidIndex U)
-  (rowVec : Matrix U n R)
-: self.D vu vn rowVec = - rowVec * (self.generatorOf vn vu) := by
-  ext _u₁ i; rw [UU.uniq _u₁]
+  {n : ℕ} (vn : ValidIndex n)
+  (v₁ : ValidIndex 1)
+  (rowVec : Matrix (Fin 1) (Fin n) R)
+: self.D v₁ vn rowVec = - rowVec * (self.generatorOf vn v₁) := by
+  have u := Fin.instUnique
+  ext _u₁ i; rw [u.uniq _u₁]
   rw [MatrixDerivationFamily.generatorOfCols]
   rw [Matrix.mul_apply]
   simp
   rw [← Matrix.mul_apply]
-  trans (self.D vu vn rowVec * stdBasisMatrix i UU.default (1 : R)) UU.default UU.default
-  · simp
-  · rw [neg_eq_zero_sub]
-    apply Eq.symm
-    rw [sub_eq_iff_eq_add]
-    rw [← Matrix.add_apply]
-    rw [add_comm]
-    rw [← self.product_rule]
-    rw [self.generatorOfScalar]
-    simp
+  trans (self.D v₁ vn rowVec * stdBasisMatrix i (0 : Fin 1) (1 : R)) 0 0
+  · simp [u.uniq 0]
+  rw [neg_eq_zero_sub]
+  apply Eq.symm
+  rw [sub_eq_iff_eq_add]
+  rw [u.uniq 0]
+  rw [← Matrix.add_apply]
+  rw [add_comm]
+  rw [← self.product_rule]
+  rw [self.generatorOfScalar]
+  simp
 
 theorem MatrixDerivationFamily.iso_Generator
-  {R : Type} [CommRing R] {ValidIndex : Type → Prop}
+  {R : Type} [CommRing R] {ValidIndex : ℕ → Prop}
   (self : MatrixDerivationFamily R ValidIndex)
-  {u : Type} [uu : Unique u] (vu : ValidIndex u)
-: GeneratorFamily.toMatrixDerivationFamily (self.toGeneratorFamily vu) = self := by
+  (v₁ : ValidIndex 1)
+: GeneratorFamily.toMatrixDerivationFamily (self.toGeneratorFamily v₁) = self := by
+  have u := Fin.instUnique
   apply MatrixDerivationFamily.ext
-  funext n m _ _ _ _ vn vm mat i j
-  have hmat : mat = ∑ ((i, j) : n × m), mat i j • stdBasisMatrix i j 1 := by
+  funext n m vn vm mat i j
+  have hmat : mat = ∑ ((i, j) : (Fin n) × (Fin m)), mat i j • stdBasisMatrix i j 1 := by
     ext k l
     rw [show mat k l = match (k, l) with | (k', l') => mat k' l' by rfl]
     rw [Fintype.sum_apply, Fintype.sum_apply]
@@ -238,69 +236,70 @@ theorem MatrixDerivationFamily.iso_Generator
   apply congrArg
 
   rw [sub_eq_iff_eq_add]
-  trans ∑ x : n, if k = x then
-      if j = l then self.D vn vu (stdBasisMatrix x uu.default 1) i uu.default else 0
+  trans ∑ x : Fin n, if k = x then
+      if j = l then self.D vn v₁ (stdBasisMatrix x u.default 1) i u.default else 0
     else 0
   · congr; ext x
     rw [stdBasis_apply]
     by_cases hkx : k = x
-    · simp [hkx, MatrixDerivationFamily.toGeneratorFamily, MatrixDerivationFamily.generatorOf]
+    · simp [hkx, MatrixDerivationFamily.toGeneratorFamily, MatrixDerivationFamily.generatorOf, u.uniq 0]
     · simp [hkx, mt Eq.symm hkx]
-  trans if j = l then self.D vn vu (stdBasisMatrix k uu.default 1) i uu.default else 0
+  trans if j = l then self.D vn v₁ (stdBasisMatrix k u.default 1) i u.default else 0
   · apply Fintype.sum_ite_eq
-  trans ((self.D vn vu (stdBasisMatrix k uu.default 1)) * (stdBasisMatrix l uu.default (1 : R))ᵀ) i j
+  trans ((self.D vn v₁ (stdBasisMatrix k u.default 1)) * (stdBasisMatrix l u.default (1 : R))ᵀ) i j
   · by_cases hjl : j = l
     · simp [hjl, Matrix.mul_apply]
     · simp [hjl, mt Eq.symm hjl, Matrix.mul_apply]
 
   rw [add_comm, ← sub_eq_iff_eq_add]
   apply Eq.symm
-  trans ∑ x : m, if l = x then
-      if i = k then self.D vm vu (stdBasisMatrix j uu.default 1) x uu.default else 0
+  trans ∑ x : Fin m, if l = x then
+      if i = k then self.D vm v₁ (stdBasisMatrix j u.default 1) x u.default else 0
     else 0
   · congr; ext x
     rw [stdBasis_apply]
     simp
     by_cases hlx : l = x
-    · simp [hlx, MatrixDerivationFamily.toGeneratorFamily, MatrixDerivationFamily.generatorOf]
+    · simp [hlx, MatrixDerivationFamily.toGeneratorFamily, MatrixDerivationFamily.generatorOf, u.uniq 0]
     · simp [hlx, mt Eq.symm hlx]
-  trans if i = k then self.D vm vu (stdBasisMatrix j uu.default 1) l uu.default else 0
+  trans if i = k then self.D vm v₁ (stdBasisMatrix j u.default 1) l u.default else 0
   · apply Fintype.sum_ite_eq
 
-  rw [show stdBasisMatrix k l (1 : R) = (stdBasisMatrix k uu.default (1 : R)) * (stdBasisMatrix l uu.default (1 : R))ᵀ by simp]
-  rw [self.product_rule vn vu vm]
+  rw [show
+    stdBasisMatrix k l (1 : R) = (stdBasisMatrix k u.default (1 : R)) * (stdBasisMatrix l u.default (1 : R))ᵀ
+    by simp]
+  rw [self.product_rule vn v₁ vm]
   simp
   rw [self.generatorOfRow]
   by_cases hik : i = k
-  · simp [hik, MatrixDerivationFamily.generatorOf]
+  · simp [hik, MatrixDerivationFamily.generatorOf, u.uniq 0]
   · simp [hik]
 
-/-- The "one-step rotation" permutation matrix on `Fin n`. -/
-def rotationMatrix
-  (R : Type) [CommRing R]
-  (n : ℕ) [Fintype (Fin n)] [DecidableEq (Fin n)]
-: Matrix (Fin n) (Fin n) R :=
-  fun i j => if n > 1 then if j = (i.val + 1) % n then 1 else 0 else 0
+----- EXAMPLE USAGE -----
+-- The GeneratorFamily is defined by a sequence of matrices that rotate up the
 
-#eval @rotationMatrix ℚ _ 0 _ _
-#eval @rotationMatrix ℚ _ 1 _ _
-#eval @rotationMatrix ℚ _ 2 _ _
-#eval @rotationMatrix ℚ _ 3 _ _
+def rotateGenFamily
+  (R : Type) [CommRing R] (ValidIndex : ℕ → Prop)
+: GeneratorFamily R ValidIndex where
+  G {n} _vn i j :=
+    if n > 1 then if j = (i.val + 1) % n then 1 else 0 else 0
 
--- set_option pp.all true
--- set_option pp.notation false
+-- See the rotation matrix of sizes 0 through 3
+#eval @(rotateGenFamily ℚ (fun _ => True)).G 0 (by tauto)
+#eval @(rotateGenFamily ℚ (fun _ => True)).G 1 (by tauto)
+#eval @(rotateGenFamily ℚ (fun _ => True)).G 2 (by tauto)
+#eval @(rotateGenFamily ℚ (fun _ => True)).G 3 (by tauto)
 
-def Injective (f : α → β) : Prop :=
-  ∀ ⦃a₁ a₂⦄, f a₁ = f a₂ → a₁ = a₂
-def Surjective (f : α → β) : Prop :=
-  ∀ b, ∃ a, f a = b
-def Bijective (f : α → β) :=
-  Injective f ∧ Surjective f
-
-/-- A family of generators indexed by “being equal to `Fin n`”. -/
-def rotateGenFamily (R : Type) [CommRing R] {ValidIndex : Type → Prop}
-  (h : ∀ α, ValidIndex α → Σ (n : ℕ), α → Fin n) :
-  GeneratorFamily R ValidIndex where
-  G {α} _ _ vα := by
-    obtain ⟨n, f⟩ := h α vα
-    exact fun i j => rotationMatrix R n (f i) (f j)
+def rotateValidIndex (n : ℕ) : Prop := n = 1 ∨ Nat.Prime n
+def rotateMatrixDerivationFamily := (rotateGenFamily ℚ rotateValidIndex).toMatrixDerivationFamily
+theorem rotate1 : rotateValidIndex 1 := by
+  rw [rotateValidIndex]
+  left; rfl
+theorem rotate2 : rotateValidIndex 2 := by
+  rw [rotateValidIndex]
+  right; exact Nat.prime_two
+theorem rotate3 : rotateValidIndex 3 := by
+  rw [rotateValidIndex]
+  right; exact Nat.prime_three
+#eval rotateMatrixDerivationFamily.D rotate3 rotate2 ![![1, 0], ![0, 0], ![0, 0]]
+#eval rotateMatrixDerivationFamily.D rotate3 rotate2 ![![0, 0], ![0, 1], ![0, 0]]
