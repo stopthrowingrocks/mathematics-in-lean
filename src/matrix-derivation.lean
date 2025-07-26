@@ -8,19 +8,22 @@ import Mathlib.Data.Nat.Prime.Defs
 
 open Matrix
 
--- This @[simp] allows the simp tactic to apply this lemma
+-- @[simp] allows the simp tactic to use this lemma
 @[simp] lemma eq_comm' {α : Type*} {i j : α} : (i = j) = (j = i) := by
   simp
   apply eq_comm
 
+/-- Helper function to identify the single nonzero index in a stdBasisMatrix. -/
 lemma stdBasis_apply
   {n m : Type} [Fintype n] [DecidableEq n] [Fintype m] [DecidableEq m]
   {R : Type} [Semiring R] (r : R)
   (k : n) (l : m) (i : n) (j : m)
 : stdBasisMatrix k l r i j = if (i, j) = (k, l) then r else 0 := by simp [stdBasisMatrix]
 
-/-- A derivation on matrices of fixed shape (n × m). -/
+/-- A derivation on matrices of type `n`×`m`,
+where `n` and `m` are permitted by `ValidIndex`. -/
 @[ext] structure MatrixDerivationFamily
+  -- TODO: It may be possible to change the proofs below to support all Semirings or Rings instead of just CommRings
   (R : Type) [Semiring R] (ValidIndex : ℕ → Prop)
 where
   D :
@@ -37,18 +40,16 @@ where
     (A : Matrix (Fin n) (Fin k) R) (B : Matrix (Fin k) (Fin m) R),
       D vn vm (A * B) = A * (D vk vm B) + (D vn vk A) * B
 
-/--
-A family of “generator” matrices `G n` for each dimension `n`
-that induce a consistent derivation:
-  D A = G n * A - A * G m.
--/
+/-- A family of “generator” matrices `G n` for each dimension `n` satisfying `ValidIndex n`.
+Used to construct MatrixDerivationFamilys. -/
 structure GeneratorFamily
-  (R : Type) [CommRing R] (ValidIndex : ℕ → Prop)
+  (R : Type) [Semiring R] (ValidIndex : ℕ → Prop)
 where
   G : ∀ {n : ℕ} (_vn : ValidIndex n), Matrix (Fin n) (Fin n) R
 
+/-- Proof of equality for two GeneratorFamilys if their generating functions are equal. -/
 @[ext] theorem GeneratorFamily.ext
-  {R : Type} [CommRing R] {ValidIndex : ℕ → Prop}
+  {R : Type} [Semiring R] {ValidIndex : ℕ → Prop}
   {F₁ F₂ : GeneratorFamily R ValidIndex}
   (h : ∀ {n : ℕ} (vn : ValidIndex n), F₁.G vn = F₂.G vn)
 : F₁ = F₂ := by
@@ -57,7 +58,7 @@ where
     · congr; funext n vn
       apply h
 
-/-- From a `GeneratorFamily`, build a full `MatrixDerivationFamily`. -/
+/-- From a `GeneratorFamily`, construct a full `MatrixDerivationFamily` using the formula `D A = G n * A - A * G m` -/
 def GeneratorFamily.toMatrixDerivationFamily
   {R : Type} [CommRing R] (self : GeneratorFamily R ValidIndex) : MatrixDerivationFamily R ValidIndex where
   D {n m} vn vm A := (self.G vn) * A - A * (self.G vm)
@@ -81,19 +82,19 @@ def GeneratorFamily.toMatrixDerivationFamily
     intro n k m vn vk vm A B
     simp [Matrix.mul_sub, Matrix.sub_mul, Matrix.mul_assoc]
 
-/-- Reconstruct the generator matrix Gₙ from a derivation `D`
-    by seeing how it acts on column basis vectors. -/
+/-- From a MatrixDerivationFamily `F`, reconstruct a specific generator matrix `G n`
+by returning how `F` derives basis vectors of size `n`. -/
 def MatrixDerivationFamily.generatorOf
-  {R : Type} [CommRing R] {ValidIndex : ℕ → Prop}
+  {R : Type} [Semiring R] {ValidIndex : ℕ → Prop}
   (self : MatrixDerivationFamily R ValidIndex)
   {n : ℕ} (vn : ValidIndex n)
   (v₁ : ValidIndex 1)
 : Matrix (Fin n) (Fin n) R :=
   fun i j => (self.D vn v₁ (stdBasisMatrix j 0 1)) i 0 -- idk if this is the right order
 
-/-- Convert an entire derivation family back into a `GeneratorFamily`. -/
+/-- From a MatrixDerivationFamily, reconstruct what its GeneratorFamily might have been. -/
 def MatrixDerivationFamily.toGeneratorFamily
-  {R : Type} [CommRing R] {ValidIndex : ℕ → Prop}
+  {R : Type} [Semiring R] {ValidIndex : ℕ → Prop}
   (self : MatrixDerivationFamily R ValidIndex)
   (v₁ : ValidIndex 1)
 : GeneratorFamily R ValidIndex where
@@ -101,7 +102,7 @@ def MatrixDerivationFamily.toGeneratorFamily
     exact self.generatorOf vn v₁
 
 /-- Converting a `GeneratorFamily` to a `MatrixDerivationFamily` and back recovers the original. -/
-theorem GeneratorFamily.iso_MatrixDerivation
+theorem GeneratorFamily.toMatrixDerivationIsInvertible
   {R : Type} [CommRing R] {ValidIndex : ℕ → Prop}
   (self : GeneratorFamily R ValidIndex)
   {v₁ : ValidIndex 1}
@@ -119,8 +120,9 @@ theorem GeneratorFamily.iso_MatrixDerivation
   rw [h₁]
   simp
 
+/-- Helper lemma that says that the Matrix Derivation of a scalar (1×1 matrix) is zero. -/
 lemma MatrixDerivationFamily.generatorOfScalar
-  {R : Type} [CommRing R] {ValidIndex : ℕ → Prop}
+  {R : Type} [Ring R] {ValidIndex : ℕ → Prop}
   (self : MatrixDerivationFamily R ValidIndex)
   (v₁ : ValidIndex 1)
   (scalarVec : Matrix (Fin 1) (Fin 1) R)
@@ -150,6 +152,7 @@ lemma MatrixDerivationFamily.generatorOfScalar
 
   simp [add_left_cancel (Eq.symm h₂)]
 
+/-- Helper lemma that says that the Matrix Derivation of a vector `colVec` is `G n * colVec`. -/
 lemma MatrixDerivationFamily.generatorOfCol
   {R : Type} [CommRing R] {ValidIndex : ℕ → Prop}
   (self : MatrixDerivationFamily R ValidIndex)
@@ -174,6 +177,7 @@ lemma MatrixDerivationFamily.generatorOfCol
   simp
   rw [mul_comm, u.uniq 0]
 
+/-- Helper lemma that describes the structure of the generator matrix. -/
 lemma MatrixDerivationFamily.generatorOfCols
   {R : Type} [CommRing R] {ValidIndex : ℕ → Prop}
   (self : MatrixDerivationFamily R ValidIndex)
@@ -185,6 +189,7 @@ lemma MatrixDerivationFamily.generatorOfCols
   rw [MatrixDerivationFamily.generatorOfCol]
   simp
 
+/-- Helper lemma that says that the Matrix Derivation of a row vector `rowVec` is `- rowVec * G n`. -/
 lemma MatrixDerivationFamily.generatorOfRow
   {R : Type} [CommRing R] {ValidIndex : ℕ → Prop}
   (self : MatrixDerivationFamily R ValidIndex)
@@ -210,7 +215,8 @@ lemma MatrixDerivationFamily.generatorOfRow
   rw [self.generatorOfScalar]
   simp
 
-theorem MatrixDerivationFamily.iso_Generator
+/-- Converting a `MatrixDerivationFamily` to a `GeneratorFamily` and back recovers the original. -/
+theorem MatrixDerivationFamily.toGeneratorIsInvertible
   {R : Type} [CommRing R] {ValidIndex : ℕ → Prop}
   (self : MatrixDerivationFamily R ValidIndex)
   (v₁ : ValidIndex 1)
@@ -275,23 +281,40 @@ theorem MatrixDerivationFamily.iso_Generator
   · simp [hik, MatrixDerivationFamily.generatorOf, u.uniq 0]
   · simp [hik]
 
------ EXAMPLE USAGE -----
--- The GeneratorFamily is defined by a sequence of matrices that rotate up the
+-- PRIMARY RESULT ------------------------------------------------------------------------------------------------------
+-- At this point, we have proven that GeneratorFamily.toMatrixDerivationFamily and
+-- MatrixDerivationFamily.toGeneratorFamily are inverses of each other (given certain conditions) and therefore
+-- the structures are isomorphic to each other. The primary result of
+-- https://stopthrowingrocks.github.io/matrix-derivation/ is precisely that every MatrixDerivationFamily is reducible
+-- to a GeneratorFamily, and therefore every MatrixDerivationFamily can be constructed from a GeneratorFamily.
 
+-- EXAMPLE USAGE -------------------------------------------------------------------------------------------------------
+-- The following example is an actual instantiation of a MatrixDerivationFamily that satisfies the necessary properties
+-- by first constructing a GeneratorFamily and from that constructing a MatrixDerivationFamily. We conclude by
+-- evaluating the Matrix Derivation of a few example vectors and matrices using this MatrixDerivationFamily.
+
+/-- This GeneratorFamily is defined by a sequence of matrices that rotate the index up. For example, `G * e2 = e3`
+where `ei` is the `i`th basis vector. -/
 def rotateGenFamily
   (R : Type) [CommRing R] (ValidIndex : ℕ → Prop)
 : GeneratorFamily R ValidIndex where
   G {n} _vn i j :=
-    if n > 1 then if j = (i.val + 1) % n then 1 else 0 else 0
+    if n > 1 then if i = (j.val + 1) % n then 1 else 0 else 0
 
 -- See the rotation matrix of sizes 0 through 3
-#eval @(rotateGenFamily ℚ (fun _ => True)).G 0 (by tauto)
-#eval @(rotateGenFamily ℚ (fun _ => True)).G 1 (by tauto)
-#eval @(rotateGenFamily ℚ (fun _ => True)).G 2 (by tauto)
-#eval @(rotateGenFamily ℚ (fun _ => True)).G 3 (by tauto)
+-- (I wish I could #assert)
+#eval @(rotateGenFamily ℚ (fun _ => True)).G 0 (by tauto) = ![]
+#eval @(rotateGenFamily ℚ (fun _ => True)).G 1 (by tauto) = ![![0]]
+#eval @(rotateGenFamily ℚ (fun _ => True)).G 2 (by tauto) = ![![0, 1], ![1, 0]]
+#eval @(rotateGenFamily ℚ (fun _ => True)).G 3 (by tauto) = ![![0, 0, 1], ![1, 0, 0], ![0, 1, 0]]
 
+/-- Restrict the valid matrix indices to only 1 and prime numbers just because we can. -/
 def rotateValidIndex (n : ℕ) : Prop := n = 1 ∨ Nat.Prime n
+
+/-- Construct a MatrixDerivationFamily from our GeneratorFamily -/
 def rotateMatrixDerivationFamily := (rotateGenFamily ℚ rotateValidIndex).toMatrixDerivationFamily
+
+-- Some theorems that 1,2,3 are valid indices
 theorem rotate1 : rotateValidIndex 1 := by
   rw [rotateValidIndex]
   left; rfl
@@ -301,5 +324,10 @@ theorem rotate2 : rotateValidIndex 2 := by
 theorem rotate3 : rotateValidIndex 3 := by
   rw [rotateValidIndex]
   right; exact Nat.prime_three
-#eval rotateMatrixDerivationFamily.D rotate3 rotate2 ![![1, 0], ![0, 0], ![0, 0]]
-#eval rotateMatrixDerivationFamily.D rotate3 rotate2 ![![0, 0], ![0, 1], ![0, 0]]
+
+-- Here we are actually evaluating the derivation of these matrices, given the kind of derivation we have defined.
+#eval rotateMatrixDerivationFamily.D rotate3 rotate1 ![![0], ![1], ![0]] -- Rotate the index up
+#eval rotateMatrixDerivationFamily.D rotate1 rotate3 ![![0, 1, 0]] -- Rotate the index down and multiply by -1
+-- For the below 3×2 matrices, (Rotate the row index up) - (Rotate the column index down)
+#eval rotateMatrixDerivationFamily.D rotate3 rotate2 ![![0, 0], ![1, 0], ![0, 0]]
+#eval rotateMatrixDerivationFamily.D rotate3 rotate2 ![![0, 0], ![1, 1], ![0, 0]] -- Linear combination of effects
