@@ -331,3 +331,8 @@ theorem rotate3 : rotateValidIndex 3 := by
 -- For the below 3×2 matrices, (Rotate the row index up) - (Rotate the column index down)
 #eval rotateMatrixDerivationFamily.D rotate3 rotate2 ![![0, 0], ![1, 0], ![0, 0]]
 #eval rotateMatrixDerivationFamily.D rotate3 rotate2 ![![0, 0], ![1, 1], ![0, 0]] -- Linear combination of effects
+
+-- EXTENDING TO TENSORS ------------------------------------------------------------------------------------------------
+-- So here is where the full generalization to tensors would go. Unfortunately, I am not enough of a masochist to
+-- actually formalize what that would look like, prove the necessary relations, and give a good working example.
+-- So in the meantime enjoy this link to a hypothetical picture of a cat: cat.png. Thanks for reading!
