@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(lake build:*)",
+      "Bash(lean:*)",
+      "Bash(lake env:*)",
+      "Bash(cat:*)",
+      "Bash(python3:*)",
+      "Bash(src/test-correlation.lean)",
+      "Bash(printf:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
