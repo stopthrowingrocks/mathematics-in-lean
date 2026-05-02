@@ -6,7 +6,7 @@ open Set Filter Topology
 lemma Tendsto_goal (f : ℝ -> ℝ) (F : Filter ℝ) (G : Filter ℝ)
 : (∀delta ∈ G, ∃ epsilon ∈ F, ∀ h ∈ epsilon, f h ∈ delta) -> Tendsto f F G := by
   intro hf
-  simp [Filter.Tendsto, Filter.map, Filter.instPartialOrder]
+  simp [Filter.Tendsto, Filter.map]
   intro U hU
   simp [preimage]
   rcases hf U hU with ⟨a, b, c⟩
@@ -15,9 +15,11 @@ lemma Tendsto_goal (f : ℝ -> ℝ) (F : Filter ℝ) (G : Filter ℝ)
 lemma Tendsto_term {f : ℝ -> ℝ} {F : Filter ℝ} {G : Filter ℝ}
 : Tendsto f F G -> ∀delta ∈ G, ∃ epsilon ∈ F, ∀ h ∈ epsilon, f h ∈ delta := by
   intro ht delta hdelta
-  simp [Filter.Tendsto, Filter.map, Filter.instPartialOrder] at ht
+  simp [Filter.Tendsto, Filter.map] at ht
   use f ⁻¹' delta
-  simp [ht hdelta]
+  have HH := ht hdelta
+  simp at HH
+  simp [HH]
 
 lemma c1_to_c0 (g : ℝ -> ℝ) (x : ℝ) (g'x : ℝ) (hg : Tendsto (fun h : ℝ => if h = 0 then g'x else (g (x + h) - g x) / h) (𝓝 0) (𝓝 g'x))
 : Tendsto (fun h => g (x + h) - g x) (𝓝 0) (𝓝 0) := by
