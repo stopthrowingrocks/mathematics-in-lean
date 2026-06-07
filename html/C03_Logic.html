@@ -1,26 +1,24 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>3. Logic &mdash; Mathematics in Lean 0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+  <title>3. Logic &mdash; Mathematics in Lean v4.19.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="_static/css/custom.css?v=0731ccc3" />
 
   
     <link rel="shortcut icon" href="_static/favicon.ico"/>
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=2709fde1"></script>
-        <script src="_static/doctools.js?v=9a2dae69"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=7048e04d"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -61,13 +59,14 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="C04_Sets_and_Functions.html">4. Sets and Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="C05_Elementary_Number_Theory.html">5. Elementary Number Theory</a></li>
-<li class="toctree-l1"><a class="reference internal" href="C06_Structures.html">6. Structures</a></li>
-<li class="toctree-l1"><a class="reference internal" href="C07_Hierarchies.html">7. Hierarchies</a></li>
-<li class="toctree-l1"><a class="reference internal" href="C08_Groups_and_Rings.html">8. Groups and Rings</a></li>
-<li class="toctree-l1"><a class="reference internal" href="C09_Linear_Algebra.html">9. Linear algebra</a></li>
-<li class="toctree-l1"><a class="reference internal" href="C10_Topology.html">10. Topology</a></li>
-<li class="toctree-l1"><a class="reference internal" href="C11_Differential_Calculus.html">11. Differential Calculus</a></li>
-<li class="toctree-l1"><a class="reference internal" href="C12_Integration_and_Measure_Theory.html">12. Integration and Measure Theory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="C06_Discrete_Mathematics.html">6. Discrete Mathematics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="C07_Structures.html">7. Structures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="C08_Hierarchies.html">8. Hierarchies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="C09_Groups_and_Rings.html">9. Groups and Rings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="C10_Linear_Algebra.html">10. Linear algebra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="C11_Topology.html">11. Topology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="C12_Differential_Calculus.html">12. Differential Calculus</a></li>
+<li class="toctree-l1"><a class="reference internal" href="C13_Integration_and_Measure_Theory.html">13. Integration and Measure Theory</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="genindex.html">Index</a></li>
@@ -289,7 +288,7 @@ but it is worth knowing that the natural numbers, integers, rationals,
 and real numbers are all instances.
 So if we prove the theorem <code class="docutils literal notranslate"><span class="pre">fnUb_add</span></code> at that level of generality,
 it will apply in all these instances.</p>
-<div class="highlight-lean notranslate"><div class="highlight"><pre><span></span><span class="kd">variable</span><span class="w"> </span><span class="o">{</span><span class="n">&#945;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">Type</span><span class="bp">*</span><span class="o">}</span><span class="w"> </span><span class="o">{</span><span class="n">R</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">Type</span><span class="bp">*</span><span class="o">}</span><span class="w"> </span><span class="o">[</span><span class="n">OrderedCancelAddCommMonoid</span><span class="w"> </span><span class="n">R</span><span class="o">]</span>
+<div class="highlight-lean notranslate"><div class="highlight"><pre><span></span><span class="kd">variable</span><span class="w"> </span><span class="o">{</span><span class="n">&#945;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">Type</span><span class="bp">*</span><span class="o">}</span><span class="w"> </span><span class="o">{</span><span class="n">R</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">Type</span><span class="bp">*</span><span class="o">}</span><span class="w"> </span><span class="o">[</span><span class="n">AddCommMonoid</span><span class="w"> </span><span class="n">R</span><span class="o">]</span><span class="w"> </span><span class="o">[</span><span class="n">PartialOrder</span><span class="w"> </span><span class="n">R</span><span class="o">]</span><span class="w"> </span><span class="o">[</span><span class="n">IsOrderedCancelAddMonoid</span><span class="w"> </span><span class="n">R</span><span class="o">]</span>
 
 <span class="k">#check</span><span class="w"> </span><span class="n">add_le_add</span>
 
@@ -730,7 +729,7 @@ then <span class="math notranslate nohighlight">\(xy\)</span> is the norm of <sp
 Our cryptic proof illustrates the fact that
 the proof that is easiest to formalize isn&#8217;t always
 the most perspicuous one.
-In <a class="reference internal" href="C06_Structures.html#section-building-the-gaussian-integers"><span class="std std-numref">Section 6.3</span></a>,
+In <a class="reference internal" href="C07_Structures.html#section-building-the-gaussian-integers"><span class="std std-numref">Section 7.3</span></a>,
 we will provide you with the means to define the Gaussian
 integers and use them to provide an alternative proof.</p>
 <p>The pattern of unpacking an equation inside an existential quantifier
@@ -1311,7 +1310,7 @@ then <code class="docutils literal notranslate"><span class="pre">a</span> <span
 <span class="kd">variable</span><span class="w"> </span><span class="o">(</span><span class="n">a</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">&#945;</span><span class="o">)</span>
 
 <span class="kd">example</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="bp">&lt;</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="bp">&#8596;</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="bp">&#8804;</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="bp">&#8743;</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="bp">&#8800;</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="kd">by</span>
-<span class="w">  </span><span class="n">rw</span><span class="w"> </span><span class="o">[</span><span class="n">lt_iff_le_not_le</span><span class="o">]</span>
+<span class="w">  </span><span class="n">rw</span><span class="w"> </span><span class="o">[</span><span class="n">lt_iff_le_not_ge</span><span class="o">]</span>
 <span class="w">  </span><span class="gr">sorry</span>
 </pre></div>
 </div>
@@ -1332,11 +1331,11 @@ to be instantiated to different values.</p>
 <span class="kd">variable</span><span class="w"> </span><span class="o">(</span><span class="n">a</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">&#945;</span><span class="o">)</span>
 
 <span class="kd">example</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="bp">&#172;</span><span class="n">a</span><span class="w"> </span><span class="bp">&lt;</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="kd">by</span>
-<span class="w">  </span><span class="n">rw</span><span class="w"> </span><span class="o">[</span><span class="n">lt_iff_le_not_le</span><span class="o">]</span>
+<span class="w">  </span><span class="n">rw</span><span class="w"> </span><span class="o">[</span><span class="n">lt_iff_le_not_ge</span><span class="o">]</span>
 <span class="w">  </span><span class="gr">sorry</span>
 
 <span class="kd">example</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="bp">&lt;</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="bp">&#8594;</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="bp">&lt;</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="bp">&#8594;</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="bp">&lt;</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="kd">by</span>
-<span class="w">  </span><span class="n">simp</span><span class="w"> </span><span class="n">only</span><span class="w"> </span><span class="o">[</span><span class="n">lt_iff_le_not_le</span><span class="o">]</span>
+<span class="w">  </span><span class="n">simp</span><span class="w"> </span><span class="n">only</span><span class="w"> </span><span class="o">[</span><span class="n">lt_iff_le_not_ge</span><span class="o">]</span>
 <span class="w">  </span><span class="gr">sorry</span>
 </pre></div>
 </div>
@@ -1814,7 +1813,7 @@ everywhere by any linear order <code class="docutils literal notranslate"><span 
 <span class="w">  </span><span class="bp">&#8704;</span><span class="w"> </span><span class="n">&#949;</span><span class="w"> </span><span class="bp">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="o">,</span><span class="w"> </span><span class="bp">&#8707;</span><span class="w"> </span><span class="n">N</span><span class="o">,</span><span class="w"> </span><span class="bp">&#8704;</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="bp">&#8805;</span><span class="w"> </span><span class="n">N</span><span class="o">,</span><span class="w"> </span><span class="bp">|</span><span class="n">s</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="bp">-</span><span class="w"> </span><span class="n">a</span><span class="bp">|</span><span class="w"> </span><span class="bp">&lt;</span><span class="w"> </span><span class="n">&#949;</span>
 </pre></div>
 </div>
-<p>In <a class="reference internal" href="C10_Topology.html#filters"><span class="std std-numref">Section 10.1</span></a>, we will see that Mathlib has mechanisms
+<p>In <a class="reference internal" href="C11_Topology.html#filters"><span class="std std-numref">Section 11.1</span></a>, we will see that Mathlib has mechanisms
 for dealing with convergence in vastly more general terms,
 not only abstracting away particular features of the domain
 and codomain,
@@ -1833,7 +1832,7 @@ but also abstracting over different types of convergence.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2020, Jeremy Avigad, Patrick Massot.</p>
+    <p>&#169; Copyright 2020-2025, Jeremy Avigad, Patrick Massot. Text licensed under CC BY 4.0.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

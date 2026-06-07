@@ -1,52 +1,34 @@
-import Mathlib.Data.Real.Basic
-import Mathlib.Data.Matrix.Basic
-import Mathlib.Tactic
-import Mathlib.LinearAlgebra.Determinant
-import Mathlib.Data.Matrix.Notation
+import MIL.Common
+import Mathlib.Probability.Distributions.Gaussian
+
+variable {X : Type*} [MetricSpace X] (a b c : X)
 
 
-/-- A point in the plane. -/
-structure Point where
-  x : ℝ
-  y : ℝ
-
-/-- Noncomputable Euclidean distance. -/
-noncomputable def dist (p q : Point) : ℝ :=
-  Real.sqrt ((p.x - q.x) ^ 2 + (p.y - q.y) ^ 2)
-
-/-- D‐entry using coordinatewise equality. -/
-noncomputable def Dentry (b p q : Point) : ℝ :=
-  if p.x = q.x ∧ p.y = q.y then dist b p
-  else (dist b p + dist b q - dist p q) / 2
-
-open Matrix
+open MeasureTheory ProbabilityTheory NNReal Real Set ENNReal Function
 
 
-/-- Build D‐matrix from xs and ys with baseline b. -/
-noncomputable def rfDMatrix {n m : Type} [Finite n] [Finite m]
-  (b : Point) (xs : n → Point) (ys : m → Point) : Matrix n m ℝ :=
-  fun i j => Dentry b (xs i) (ys j)
+-- variable {Ω : Type} [MeasureSpace Ω]
+-- variable {μ : ℝ} {v : ℝ≥0}
+-- variable {X : Ω → ℝ} (hX : Measure.map X ℙ = gaussianReal μ v)
+-- #check X
 
-/-- Conditional mean φ(q) given existing xs with values φ_e. -/
-noncomputable def conditionalMean {n : Type} [Finite n]
-  (b : Point) (xs : n → Point) (φ : n → ℝ) (q : Point) : ℝ :=
-  let D_ee := rfDMatrix b xs xs              -- (n×n)
-  let A := D_ee⁻¹               -- (n×n)
-  let α    := A.mulVec φ                     -- (n)
-  let k    := rfDMatrix b xs fun _ => q      -- (n×1) as matrix
-  (kᵀ.mulVec α) 0
+structure SingletonGaussian
+  {X : Type} [MetricSpace X]
+  (x : X) (μ : ℝ) (v : ℝ≥0)
+  -- [MeasurableSpace ({x' : X // x' = x} → ℝ)]
+extends Measure ({x' : X // x' = x} → ℝ)
+where
+  measureOf : {x' : X // x' = x} → ℝ≥0∞ := sorry
+  -- empty : measureOf ∅ = 0 := sorry
+  -- mono : ∀ {s₁ s₂}, s₁ ⊆ s₂ → measureOf s₁ ≤ measureOf s₂
+  -- iUnion_nat : ∀ s : ℕ → Set α, Pairwise (Disjoint on s) →
+  --   measureOf (⋃ i, s i) ≤ ∑' i, measureOf (s i) := sorry
 
-/-- Conditional variance Var[φ(q)] | φ_e. -/
-noncomputable def conditionalVar {n : Type} [Finite n]
-  (ν : ℝ) (b : Point) (xs : n → Point) (φ : n → ℝ) (q : Point) : ℝ :=
-  let φ0  := φ default
-  let D_ee:= rfDMatrix b xs xs               -- (n×n)
-  let K_ee:= ν • D_ee                       -- (n×n)
-  let A := K_ee⁻¹               -- (n×n)
-  let D_en:= rfDMatrix b xs fun _ => q       -- (n×1)
-  let k    := ν • D_en                      -- (n×1)
-  ν * Dentry b q q - (kᵀ.mulVec (A.mulVec fun i => φ i - φ0)) 0
-
-#eval let b : Point := { x := 0, y := 0 }
-#eval let xs : Fin 2 → Point := fun i => if i = 0 then { x := 1, y := 0 } else { x := 0, y := 1 }
-#eval conditionalMean b xs (fun i => if i = 0 then 1.0 else 2.0) { x := 0.5, y := 0.5 }
+structure RandomField
+  {X : Type} [MetricSpace X]
+  (xs : Set X) (μ : X → ℝ) (v : ℝ≥0)
+where
+  φ : ∀(xs₀ : Set X), xs₀ ⊆ xs → Measure (xs₀ → ℝ)
+  hμ : ∀ (x : X) (hx : x ∈ xs), (φ ({x}) (by simp; exact hx) = (where
+    measureOf := sorry))
+  -- conditional_probability : ∀ : φs, ∫⁻ φ
