@@ -142,13 +142,13 @@ def step_actor {cfg : Config}
   Goal / Terminal
 ──────────────────────────────────────────────────────────-/
 
-def hasTarget (s : State) : Prop := ∃ p, s.board p = .target
+def hasTarget {cfg : Config} (b : Board cfg) : Prop := ∃ p, b p = .target
 
-def solved (s : State) : Prop := ¬ hasTarget s
+def solved {cfg : Config} (b : Board cfg) : Prop := ¬ hasTarget b
 
 -- Decidable instance: check all 165 board positions
 -- TODO fix this
-instance  {s : State} : Decidable (hasTarget s) := sorry
+-- instance  {s : State} : Decidable (hasTarget s) := sorry
   -- if h : ∃ p : Pos s.cfg, s.board p = .target then isTrue h else isFalse h
 
 /-──────────────────────────────────────────────────────────
@@ -406,31 +406,31 @@ theorem count_player_preserved
 
 -- How a single Board.update changes the count of any target cell (as an Int equation)
 private lemma count_update_int {cfg : Config} (b : Board cfg)
-    (pos : Pos cfg) (c target : Cell) :
-    (count (b.update pos c) target : Int) =
-    count b target + (if c = target then 1 else 0) - (if b pos = target then 1 else 0) := by
+    (pos : Pos cfg) (c t : Cell) :
+    (count (b.update pos c) t : Int) =
+    count b t + (if c = t then 1 else 0) - (if b pos = t then 1 else 0) := by
   simp only [count]
-  rcases Decidable.em (c = target) with hc | hc <;> rcases Decidable.em (b pos = target) with hb | hb
-  · have : Finset.univ.filter (fun x : Pos cfg => (b.update pos target) x = target) =
-           Finset.univ.filter (fun x : Pos cfg => b x = target) := by
+  rcases Decidable.em (c = t) with hc | hc <;> rcases Decidable.em (b pos = t) with hb | hb
+  · have : Finset.univ.filter (fun x : Pos cfg => (b.update pos t) x = t) =
+           Finset.univ.filter (fun x : Pos cfg => b x = t) := by
       ext x; simp [Finset.mem_filter, Board.update, beq_iff_eq]
       by_cases h : x = pos <;> simp [h, hb, ← hc]
     simp [hc, hb, this]
   · simp [hc]
-    rw [show Finset.univ.filter (fun x : Pos cfg => (b.update pos target) x = target) =
-          insert pos (Finset.univ.filter (fun x : Pos cfg => b x = target)) from by
-      ext x; simp [Finset.mem_filter, Finset.mem_insert, Board.update, beq_iff_eq, hc]
+    rw [show Finset.univ.filter (fun x : Pos cfg => (b.update pos t) x = t) =
+          insert pos (Finset.univ.filter (fun x : Pos cfg => b x = t)) from by
+      ext x; simp [Finset.mem_filter, Finset.mem_insert, Board.update, beq_iff_eq]
       by_cases h : x = pos <;> simp [h, hb],
       Finset.card_insert_of_notMem (by simp [hb])]
     simp [hb]
-  · rw [show Finset.univ.filter (fun x : Pos cfg => b x = target) =
-          insert pos (Finset.univ.filter (fun x : Pos cfg => (b.update pos c) x = target)) from by
+  · rw [show Finset.univ.filter (fun x : Pos cfg => b x = t) =
+          insert pos (Finset.univ.filter (fun x : Pos cfg => (b.update pos c) x = t)) from by
       ext x; simp [Finset.mem_filter, Finset.mem_insert, Board.update, beq_iff_eq]
       by_cases h : x = pos <;> simp [h, hb, hc],
       Finset.card_insert_of_notMem (by simp [Board.update, hc])]
     simp [hb, hc]
-  · have : Finset.univ.filter (fun x : Pos cfg => (b.update pos c) x = target) =
-           Finset.univ.filter (fun x : Pos cfg => b x = target) := by
+  · have : Finset.univ.filter (fun x : Pos cfg => (b.update pos c) x = t) =
+           Finset.univ.filter (fun x : Pos cfg => b x = t) := by
       ext x; simp [Finset.mem_filter, Board.update, beq_iff_eq]
       by_cases h : x = pos <;> simp [h, hb, hc]
     simp [hc, hb, this]
@@ -450,14 +450,14 @@ theorem count_target_box_preserved
       split at hstep
       · rename_i hbp
         simp at hstep; subst hstep
-        have hap : actor ≠ p := by intro e; subst e; simp at hba hbp
+        have hap : actor ≠ p := by intro e; subst e; rw [hba] at hbp; contradiction
         have ep : (b.update actor .empty) p = b p := by simp [hap.symm]
         have e1t := count_update_int b actor .empty .target
         have e1bx := count_update_int b actor .empty .box
         have e2t := count_update_int (b.update actor .empty) p .player .target
         have e2bx := count_update_int (b.update actor .empty) p .player .box
         simp (config := { decide := true }) [hba, hbp, ep] at e1t e1bx e2t e2bx
-        push_cast at e1t e1bx e2t e2bx ⊢; linarith
+        linarith
       · rename_i hbp
         split at hstep
         · contradiction
@@ -465,9 +465,9 @@ theorem count_target_box_preserved
           split at hstep
           · rename_i hbq
             simp at hstep; subst hstep
-            have hap : actor ≠ p := by intro e; subst e; simp at hba hbp
-            have haq : actor ≠ q := by intro e; subst e; simp at hba hbq
-            have hpq : p ≠ q := by intro e; subst e; simp at hbp hbq
+            have hap : actor ≠ p := by intro e; subst e; rw [hba] at hbp; contradiction
+            have haq : actor ≠ q := by intro e; subst e; rw [hba] at hbq; contradiction
+            have hpq : p ≠ q := by intro e; subst e; rw [hbq] at hbp; contradiction
             have ep : (b.update actor .empty) p = b p := by simp [hap.symm]
             have eq' : (b.update actor .empty |>.update p .player) q = b q := by simp [hpq.symm, haq.symm]
             have e1t := count_update_int b actor .empty .target
@@ -477,13 +477,13 @@ theorem count_target_box_preserved
             have e3t := count_update_int (b.update actor .empty |>.update p .player) q .box .target
             have e3bx := count_update_int (b.update actor .empty |>.update p .player) q .box .box
             simp (config := { decide := true }) [hba, hbp, hbq, ep, eq'] at e1t e1bx e2t e2bx e3t e3bx
-            push_cast at e1t e1bx e2t e2bx e3t e3bx ⊢; linarith
+            linarith
           · rename_i hbq
             -- push box to target: box -1, target -1 → difference preserved
             simp at hstep; subst hstep
-            have hap : actor ≠ p := by intro e; subst e; simp at hba hbp
-            have haq : actor ≠ q := by intro e; subst e; simp at hba hbq
-            have hpq : p ≠ q := by intro e; subst e; simp at hbp hbq
+            have hap : actor ≠ p := by intro e; subst e; rw [hba] at hbp; contradiction
+            have haq : actor ≠ q := by intro e; subst e; rw [hba] at hbq; contradiction
+            have hpq : p ≠ q := by intro e; subst e; rw [hbq] at hbp; contradiction
             have ep : (b.update actor .empty) p = b p := by simp [hap.symm]
             have eq' : (b.update actor .empty |>.update p .player) q = b q := by simp [hpq.symm, haq.symm]
             have e1t := count_update_int b actor .empty .target
@@ -493,7 +493,7 @@ theorem count_target_box_preserved
             have e3t := count_update_int (b.update actor .empty |>.update p .player) q .empty .target
             have e3bx := count_update_int (b.update actor .empty |>.update p .player) q .empty .box
             simp (config := { decide := true }) [hba, hbp, hbq, ep, eq'] at e1t e1bx e2t e2bx e3t e3bx
-            push_cast at e1t e1bx e2t e2bx e3t e3bx ⊢; linarith
+            linarith
           · contradiction
       · contradiction
   · contradiction
@@ -506,23 +506,61 @@ def execMoves {cfg : Config} (b : Board cfg) : List (Pos cfg × Dir) → Option 
   | []            => some b
   | (p, d) :: ms  => (step_actor b p d) >>= fun b' => execMoves b' ms
 
-structure Strategy where
-  cfg : Config
-  state_t : Type
-  init_state_t : Board cfg -> state_t
-  policy : (s : state_t, b : Board cfg) -> (state_t, Board cfg)
+def solvable {cfg : Config} (b : Board cfg) : Prop :=
+  ∃ (l : List (Pos cfg × Dir)) (b' : Board cfg), some b' = execMoves b l ∧ solved b'
+def unsolvable {cfg : Config} (b : Board cfg) : Prop := ¬ solvable b
+
+-- structure Strategy where
+--   cfg : Config
+--   state_t : Type
+--   init_state_t : Board cfg -> state_t
+--   policy : (s : state_t, b : Board cfg) -> (state_t, Board cfg)
 
 -- execMoves preserves walls
-theorem execMoves_walls_preserved {cfg : Config} {init : State} (moves : List (Pos × Dir))
-    {s : State} (hexec : execMoves init moves = some s)
-    {p : Pos} (hwall : init.board p = .wall) :
-    s.board p = .wall := by
+theorem execMoves_walls_preserved
+  {cfg : Config} {init : Board cfg} {moves : List (Pos cfg × Dir)}
+  {b : Board cfg} (hexec : some b = execMoves init moves)
+  {p : Pos cfg} (hwall : init p = .wall)
+: b p = .wall := by
   induction moves generalizing init with
   | nil  => simp [execMoves] at hexec; subst hexec; exact hwall
   | cons hd tl ih =>
     simp [execMoves, Option.bind] at hexec
-    obtain ⟨s', hstep, hexec'⟩ := hexec
-    exact ih hexec' (walls_preserved hstep hwall)
+    split at hexec
+    · contradiction
+    · rename_i b' hb'
+      exact ih hexec (walls_preserved (Eq.symm hb') hwall)
+
+theorem execMoves_count_target_box_preserved
+  {cfg : Config} {init : Board cfg} {moves : List (Pos cfg × Dir)}
+  {b : Board cfg} (hexec : some b = execMoves init moves)
+  {n : Int} (count_target_boxs : (count init .target : Int) - count init .box = n)
+: (count b .target : Int) - count b .box = n := by
+  induction moves generalizing init with
+  | nil  => simp [execMoves] at hexec; subst hexec; exact count_target_boxs
+  | cons hd tl ih =>
+    simp [execMoves, Option.bind] at hexec
+    split at hexec
+    · contradiction
+    · rename_i b' hb'
+      exact ih hexec (count_target_box_preserved (Eq.symm hb') count_target_boxs)
+
+theorem unsolvable_if_more_targets {cfg : Config} {b : Board cfg}
+: (count b .target : Int) - count b .box > 0 -> unsolvable b := by
+  intro hcount ⟨sln, slnb, hslnb, hsolvedb⟩
+  have notargets : count slnb .target = 0 := by
+    by_contra hne
+    have hpos : 0 < count slnb .target := by omega
+    simp only [count, Finset.card_pos] at hpos
+    obtain ⟨p, hp⟩ := hpos
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hp
+    exact hsolvedb ⟨p, hp⟩
+  rw [← execMoves_count_target_box_preserved hslnb rfl] at hcount
+  simp at hcount
+  rw [notargets] at hcount
+  exact Nat.not_succ_le_zero (count slnb Cell.box) hcount
+
+theorem corner_boxes_dont_move {cfg : Config} := sorry -- TODO
 
 /-──────────────────────────────────────────────────────────
   Initial board  (matches GDL init facts)
